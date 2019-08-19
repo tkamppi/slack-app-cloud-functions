@@ -31,12 +31,12 @@ export oauth_token=<YOUR_APPS_SLACK_OAUTH_ACCESS_TOKEN>
 
 Slash command function:
 ```
-cd slash_command
+cd src/slash_command
 gcloud functions deploy slash_command --runtime python37 --trigger-http --memory=128MB --set-env-vars SLACK_SIGNING_SECRET=$signing_secret,SLACK_OAUTH_TOKEN=$oauth_token,SLACK_SLASH_COMMAND=$slash_command
 ```
 
 Dialog handling function:
 ```
-cd dialog_submission
+cd src/dialog_submission
 gcloud functions deploy dialog_submission --runtime python37 --trigger-http --memory=128MB --set-env-vars PUBSUB_TOPIC_NAME=$pubsub_topic,SLACK_SIGNING_SECRET=$signing_secret
 ```
