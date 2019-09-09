@@ -14,7 +14,7 @@ The Slack app should be configured to send a Slash command to the Google Cloud f
 The Google Cloud function `slash_command` sends a short message to the user, and triggers a Slack dialog window:  
 ![Dialog](images/slack-dialog.png)  
 
-Once the user responds to the dialog, Slack sends a handled by the Cloud function under directory `dialog_submission`, which pushes the message containing the submission data and other data sent by Slack to into a topic on Google Cloud Pub/Sub. 
+Once the user responds to the dialog, Slack sends a request to the Cloud function under directory `dialog_submission`, which pushes the message containing the submission data and other data sent by Slack to into a topic on Google Cloud Pub/Sub. 
 
 ## Setup
 Prequisite: 
