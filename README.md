@@ -17,7 +17,10 @@ The Google Cloud function `slash_command` sends a short message to the user, and
 Once the user responds to the dialog, Slack sends a handled by the Cloud function under directory `dialog_submission`, which pushes the message containing the submission data and other data sent by Slack to into a topic on Google Cloud Pub/Sub. 
 
 ## Setup
-Prequisite: You must have a Cloud Pub/Sub topic. You will also need to give the user running the Dialog Cloud Function write access to that topic.
+Prequisite: 
+* You must have a Cloud Pub/Sub topic. 
+* You will also need to give the user running the Dialog Cloud Function write access to that topic.
+* An app registered in Slack. This is required to get the signing secret and oauth token for deployment below.
 
 Deploy the Cloud Functions:
 
