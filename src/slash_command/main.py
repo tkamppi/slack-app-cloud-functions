@@ -97,4 +97,4 @@ def trigger_dialog(request):
     headers = {"Authorization": authorization_header_value}
     r = requests.post(response_url, json=payload, headers=headers)
     print(f"Dialog trigger status_code from slack: {r.status_code}")
-    print(f"Dialog trigger response body from slack: {r.content}")
+    print(f"Dialog trigger response body from slack: {r.text}")
