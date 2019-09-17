@@ -22,11 +22,10 @@ def dialog_submission(request):
         return ("Request signature invalid.", 401)
 
     payload = request.form.get("payload")
-    json_payload = {}
     if payload:
         json_payload = json.loads(payload)
     if json_payload.get("type") == "dialog_submission":
-        pubsub_push(request)
+        pubsub_push(payload)
         return ""
 
     return "Unhandled Slack request received", 403
@@ -64,11 +63,13 @@ def __verify_signature(request):
     return hmac.compare_digest(request_hash, signature)
 
 
-def pubsub_push(request):
-    """Takes the request object passed by Cloud Functions
-    and extracts the relevant Slack information pushing it to pubsub"""
+def pubsub_push(data):
+    """
+    Takes the data sent in, and pushes it into a Pub/Sub topic.
+    :param data: object which implements __str__ method.
+    """
     topic_name = os.environ.get("PUBSUB_TOPIC_NAME")
-    data = request.get_data()
+    pubsub_bytestring = str(data).encode("utf-8") # Pub/Sub requires bytestring
 
     publisher = pubsub_v1.PublisherClient()
-    publisher.publish(topic_name, data, caller="Slack")
+    publisher.publish(topic_name, pubsub_bytestring, caller="Slack")
