@@ -1,10 +1,19 @@
 import sys
 import os
+import logging
 import hmac
 import hashlib
 import requests
 
 from time import time
+
+
+class SlackError(RuntimeError):
+    pass
+
+
+class SlackAppNotInteractive(SlackError):
+    pass
 
 
 def slash_command(request):
@@ -21,11 +30,19 @@ def slash_command(request):
         return ("Request signature invalid.", 401)
 
     slash_command = request.form.get("command")
-    if slash_command == os.environ.get("SLACK_SLASH_COMMAND"):
-        trigger_dialog(request)
-        return "Launching dialog"
+    if slash_command != os.environ.get("SLACK_SLASH_COMMAND"):
+        return ("Unhandled Slack request received", 403)
 
-    return "Unhandled Slack request received", 403
+    try:
+        trigger_dialog(request)
+    except SlackError as err:
+        logging.critical(f"Slack open.dialog failed: {err}")
+        return (
+            "Slack responded with an error to the dialog.open call. "
+            "Check the logs with your Slack App administrator for further details."
+        )
+
+    return "Launching dialog"
 
 
 def _verify_signature(request):
@@ -96,5 +113,12 @@ def trigger_dialog(request):
     authorization_header_value = f"Bearer {bearer_token}"
     headers = {"Authorization": authorization_header_value}
     r = requests.post(response_url, json=payload, headers=headers)
+
+    data = r.json()
+    if data.get("error") == "app_missing_action_url":
+        raise SlackAppNotInteractive("Dialogs are not enabled for the Slack App.")
+    if data.get("ok") == False:
+        raise SlackError(data.get("error"))
+
     print(f"Dialog trigger status_code from slack: {r.status_code}")
-    print(f"Dialog trigger response body from slack: {r.content}")
+    print(f"Dialog trigger response body from slack: {r.text}")
