@@ -25,7 +25,7 @@ def dialog_submission(request):
     if payload:
         json_payload = json.loads(payload)
     if json_payload.get("type") == "dialog_submission":
-        pubsub_push(payload)
+        pubsub_push(json_payload)
         return ""
 
     return "Unhandled Slack request received", 403
@@ -66,10 +66,11 @@ def __verify_signature(request):
 def pubsub_push(data):
     """
     Takes the data sent in, and pushes it into a Pub/Sub topic.
-    :param data: object which implements __str__ method.
+    :param data: object serializable to JSON using json.dumps(data).
     """
     topic_name = os.environ.get("PUBSUB_TOPIC_NAME")
-    pubsub_bytestring = str(data).encode("utf-8") # Pub/Sub requires bytestring
+    json_str = json.dumps(data)
+    pubsub_bytestring = str(json_str).encode("utf-8")  # Pub/Sub requires bytestring
 
     publisher = pubsub_v1.PublisherClient()
     publisher.publish(topic_name, pubsub_bytestring, caller="Slack")
