@@ -22,8 +22,10 @@ def dialog_submission(request):
         return ("Request signature invalid.", 401)
 
     payload = request.form.get("payload")
-    if payload:
+    try:
         json_payload = json.loads(payload)
+    except json.JSONDecodeError: 
+        return ("Unable to deserialize JSON from Slack payload", 400)
     if json_payload.get("type") == "dialog_submission":
         pubsub_push(json_payload)
         return ""
