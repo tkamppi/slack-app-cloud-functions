@@ -50,23 +50,15 @@ def _verify_signature(request):
     signature = request.headers.get("X-Slack-Signature")
     req_timestamp = request.headers.get("X-Slack-Request-Timestamp")
     req_body = request.get_data().decode("utf-8")
-    slack_signing_secret = bytes(os.environ.get("SLACK_SIGNING_SECRET"), "utf-8")
 
+    slack_signing_secret = bytes(os.environ.get("SLACK_SIGNING_SECRET"), "utf-8")
     if not slack_signing_secret:
-        print("Missing ENV SLACK_SIGNING_SECRET, verification of request failed.")
-        return False
-    if not signature:
-        print("Missing X-Slack-Signature header, verification of request failed.")
-        return False
-    if not req_timestamp:
-        print(
-            "Missing X-Slack-Request-Timestamp header, verification of request failed."
+        logging.error(
+            "Missing ENV SLACK_SIGNING_SECRET, verification of request failed."
         )
         return False
-    if abs(time() - int(req_timestamp)) > 60 * 5:
-        print(
-            "X-Slack-Request-Timestamp differs too much in time, verification failed."
-        )
+
+    if not slack_header_validation(signature, req_timestamp):
         return False
 
     req_string = f"v0:{req_timestamp}:{req_body}".encode("utf-8")
@@ -122,3 +114,32 @@ def trigger_dialog(request):
 
     print(f"Dialog trigger status_code from slack: {r.status_code}")
     print(f"Dialog trigger response body from slack: {r.text}")
+
+
+def slack_header_validation(signature, req_timestamp):
+    """Verify that the Slack headers required for signature verification
+    are present, and that they are generated recently by validating the timestamp.
+
+    Args:
+        signature (flask.Request.headers.get("X-Slack-Signature")): Signature header.
+        req_timestamp (flask.Request.headers.get("X-Slack-Request-Timestamp")): Timestamp header.
+    Returns:
+        True or False boolean.
+    """
+    if not signature:
+        logging.error(
+            "Missing X-Slack-Signature header, verification of request failed."
+        )
+        return False
+    if not req_timestamp:
+        logging.error(
+            "Missing X-Slack-Request-Timestamp header, verification of request failed."
+        )
+        return False
+    if abs(time() - int(req_timestamp)) > 60 * 5:
+        logging.error(
+            "X-Slack-Request-Timestamp differs too much in time, verification failed."
+        )
+        return False
+
+    return True
