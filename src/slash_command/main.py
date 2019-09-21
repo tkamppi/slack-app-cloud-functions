@@ -112,8 +112,8 @@ def trigger_dialog(request):
     if data.get("ok") == False:
         raise SlackError(data.get("error"))
 
-    print(f"Dialog trigger status_code from slack: {r.status_code}")
-    print(f"Dialog trigger response body from slack: {r.text}")
+    logging.info(f"Dialog trigger status_code from slack: {r.status_code}")
+    logging.info(f"Dialog trigger response body from slack: {r.text}")
 
 
 def slack_header_validation(signature, req_timestamp):
