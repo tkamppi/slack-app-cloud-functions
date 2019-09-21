@@ -19,7 +19,7 @@ def dialog_submission(request):
         Response object using `make_response`
         <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>.
     """
-    if not __verify_signature(request):
+    if not _verify_signature(request):
         return ("Request signature invalid.", 401)
 
     payload = request.form.get("payload")
@@ -34,7 +34,7 @@ def dialog_submission(request):
     return "Unhandled Slack request received", 403
 
 
-def __verify_signature(request):
+def _verify_signature(request):
     """Verify that the request is coming from Slack"""
     signature = request.headers.get("X-Slack-Signature")
     req_timestamp = request.headers.get("X-Slack-Request-Timestamp")
