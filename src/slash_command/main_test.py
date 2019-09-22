@@ -75,6 +75,40 @@ def test_request_unauthenticated(app, monkeypatch):
     assert response.get_data(as_text=True) == "Request signature invalid."
 
 
+@pytest.mark.parametrize(
+    "slash_command, expected_status_code",
+    [
+        ("/wrong-slash-command", 403),
+        ("/correct-slash-command", 200),
+    ],
+)
+@mock.patch("main._verify_signature")
+@mock.patch("main.trigger_dialog")
+def test_request_with_slack_command(trigger_dialog_mock, 
+verify_signature_mock, 
+slash_command, 
+expected_status_code, 
+app, 
+monkeypatch
+):
+    """Test that the slash command allowed is set by the env SLACK_SLASH_COMMAND,
+    any other slash command should generate a HTTP 403 Forbidden response.
+    We mock out any Slakc authentication validation and actual work performed by  
+    functions verify_signature & trigger_dialog.
+    """
+    monkeypatch.setenv("SLACK_SLASH_COMMAND", "/correct-slash-command")
+    verify_signature_mock.return_value = True
+    trigger_dialog_mock.return_value = None
+    with app.test_request_context(
+        data=f"command={slash_command}", 
+        content_type="application/x-www-form-urlencoded",
+    ) as request:
+        res = main.slash_command(request.request)
+        response = flask.make_response(res)
+
+    assert response.status_code == expected_status_code
+
+
 @responses.activate
 def test_dialog_trigger_request_towards_slack_dialog_api(app, monkeypatch):
     """Test that the dialog trigger sends a request to Slack containing:
