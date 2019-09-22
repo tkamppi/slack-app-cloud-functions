@@ -50,7 +50,7 @@ def test__verify_signature(
     The headers for timestamp and signature are in the function get_example_headers.
     """
     BODY = b"token=xyzz0WbapA4vBCDEFasx0q6G&team_id=T1DC2JH3J&team_domain=testteamnow&channel_id=G8PSS9T3V&channel_name=foobar&user_id=U2CERLKJA&user_name=roadrunner&command=%2Fwebhook-collect&text=&response_url=https%3A%2F%2Fhooks.slack.com%2Fcommands%2FT1DC2JH3J%2F397700885554%2F96rGlfmibIGlgcZRskXaIFfN&trigger_id=398738663015.47445629121.803a0bc887a14d10d2c447fce8b6703c"
-    
+
     monkeypatch.setenv("SLACK_SIGNING_SECRET", slack_signing_secret)
     request_mock.headers.get.side_effect = get_example_headers
     request_mock.get_data.return_value = BODY
@@ -58,3 +58,16 @@ def test__verify_signature(
     with app.test_request_context():
         res = main._verify_signature(flask.request)
     assert res == expected_outcome
+
+
+def test_request_unauthenticated(app, monkeypatch):
+    """Test that the Flask Response will be HTTP status 401,
+    and that  the response indicates it was because the signature 
+    could not be verified.
+    """
+    monkeypatch.setenv("SLACK_SIGNING_SECRET", "secret")
+    with app.test_request_context(method="POST"):
+        res = main.slash_command(flask.request)
+        response = flask.make_response(res)
+    assert response.status_code == 401
+    assert response.get_data(as_text=True) == "Request signature invalid."
